@@ -149,3 +149,8 @@ body {
 .leaflet-control-attribution {
     filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
+
+#dept-select option { 
+    background-color: #1e293b; 
+    color: #fff; 
+}
