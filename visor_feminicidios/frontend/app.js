@@ -45,11 +45,7 @@ function getColor(d) {
 }
 
 function stylePolygon(feature) {
-    // Normalizar nombre para coincidir
-    const name = feature.properties.NOMBRE_DPT;
-    const stat = currentStats.find(s => s.nombre.toUpperCase() === name.toUpperCase() || (name === 'SANTAFE DE BOGOTA D.C' && s.nombre === 'Bogotá D.C.'));
-    const total = stat ? parseInt(stat.total) : 0;
-    
+    const total = feature.properties.total;
     return {
         fillColor: getColor(total),
         weight: 1,
@@ -99,7 +95,6 @@ async function loadNationalData(year = 2025) {
         const data = await response.json();
         currentStats = data.departamentos;
 
-        // Populate departments select if it's empty
         const deptSelect = document.getElementById('dept-select');
         if (deptSelect.options.length <= 1) {
             data.departamentos.forEach(dep => {
@@ -117,17 +112,17 @@ async function loadNationalData(year = 2025) {
         const top5 = data.departamentos.slice(0, 5);
         updateChart(`Top 5 Deptos (${year})`, top5.map(d => d.nombre), top5.map(d => parseInt(d.total)));
 
-        // Cargar GeoJSON de Colombia
-        const geoResp = await fetch('https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/be6a6e239cd5b5b803c6e7c2ec405b793a9064dd/Colombia.geo.json');
-        const geoData = await geoResp.json();
-        
-        geojsonLayer = L.geoJSON(geoData, {
+        // Cargar polígonos desde la base de datos
+        const features = data.departamentos.filter(d => d.geom).map(d => ({
+            type: "Feature",
+            geometry: JSON.parse(d.geom),
+            properties: { nombre: d.nombre, total: parseInt(d.total) }
+        }));
+
+        geojsonLayer = L.geoJSON({ type: "FeatureCollection", features: features }, {
             style: stylePolygon,
             onEachFeature: function (feature, layer) {
-                const name = feature.properties.NOMBRE_DPT;
-                const stat = currentStats.find(s => s.nombre.toUpperCase() === name.toUpperCase() || (name === 'SANTAFE DE BOGOTA D.C' && s.nombre === 'Bogotá D.C.'));
-                const total = stat ? parseInt(stat.total) : 0;
-                layer.bindPopup(`<b>${name}</b><br>Feminicidios: ${total}`);
+                layer.bindPopup(`<b>${feature.properties.nombre}</b><br>Feminicidios: ${feature.properties.total}`);
             }
         }).addTo(map);
 
@@ -145,23 +140,25 @@ async function loadDepartmentData(deCodigo, deName, year = 2025) {
     }
 
     try {
-        // Cargar solo el polígono del departamento
-        const geoResp = await fetch('https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/be6a6e239cd5b5b803c6e7c2ec405b793a9064dd/Colombia.geo.json');
-        const geoData = await geoResp.json();
-        
-        const singleFeature = geoData.features.filter(f => f.properties.NOMBRE_DPT.toUpperCase() === deName.toUpperCase() || (f.properties.NOMBRE_DPT === 'SANTAFE DE BOGOTA D.C' && deName === 'Bogotá D.C.'));
-        
-        geojsonLayer = L.geoJSON(singleFeature, {
-            style: {
-                fillColor: '#e11d48',
-                weight: 2,
-                opacity: 1,
-                color: '#fff',
-                fillOpacity: 0.2
-            }
-        }).addTo(map);
+        // Cargar polígono del departamento desde los stats guardados
+        const depStat = currentStats.find(d => d.codigo === deCodigo && d.geom);
+        if (depStat) {
+            const singleFeature = {
+                type: "Feature",
+                geometry: JSON.parse(depStat.geom),
+                properties: { nombre: depStat.nombre, total: parseInt(depStat.total) }
+            };
+            
+            geojsonLayer = L.geoJSON(singleFeature, {
+                style: {
+                    fillColor: '#e11d48',
+                    weight: 2,
+                    opacity: 1,
+                    color: '#fff',
+                    fillOpacity: 0.2
+                }
+            }).addTo(map);
 
-        if (singleFeature.length > 0) {
             map.fitBounds(geojsonLayer.getBounds());
         }
 

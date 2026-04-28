@@ -21,7 +21,8 @@ app.get('/api/statistics', async (req, res) => {
     // Todos los departamentos, conteo de casos en el año especificado
     const depsQuery = `
       SELECT d.deCodigo as codigo, d.deNombre as nombre, 
-             COALESCE(e.total_feminicidios, 0) as total
+             COALESCE(e.total_feminicidios, 0) as total,
+             ST_AsGeoJSON(d.geom) as geom
       FROM DEPARTAMENTO d
       LEFT JOIN ESTADISTICAS_FEMINICIDIOS_POR_DEPARTAMENTO e 
              ON d.deCodigo = e.deCodigo AND e.anio = $1
