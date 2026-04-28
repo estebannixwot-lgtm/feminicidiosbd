@@ -21,11 +21,10 @@ app.get('/api/statistics', async (req, res) => {
     // Todos los departamentos, conteo de casos en el año especificado
     const depsQuery = `
       SELECT d.deCodigo as codigo, d.deNombre as nombre, 
-             COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM c.fecha) = $1 THEN 1 ELSE 0 END), 0) as total
+             COALESCE(e.total_feminicidios, 0) as total
       FROM DEPARTAMENTO d
-      LEFT JOIN MUNICIPIO m ON d.deCodigo = m.dpto_ccdgo
-      LEFT JOIN CASO_FEMINICIDIO c ON m.mpio_ccdgo = c.mpio_ccdgo
-      GROUP BY d.deCodigo, d.deNombre
+      LEFT JOIN ESTADISTICAS_FEMINICIDIOS_POR_DEPARTAMENTO e 
+             ON d.deCodigo = e.deCodigo AND e.anio = $1
       ORDER BY total DESC, d.deNombre ASC
     `;
     const depsResult = await pool.query(depsQuery, [year]);
