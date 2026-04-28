@@ -42,6 +42,25 @@ app.get('/api/statistics', async (req, res) => {
   }
 });
 
+app.get('/api/municipios/:deCodigo', async (req, res) => {
+  try {
+    const { deCodigo } = req.params;
+    const query = `
+      SELECT m.mpio_cnmbr as nombre, COUNT(c.id_caso) as total_casos
+      FROM MUNICIPIO m
+      LEFT JOIN CASO_FEMINICIDIO c ON m.mpio_ccdgo = c.mpio_ccdgo
+      WHERE m.dpto_ccdgo = $1
+      GROUP BY m.mpio_cnmbr
+      ORDER BY total_casos DESC
+    `;
+    const result = await pool.query(query, [deCodigo]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
