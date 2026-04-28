@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Comando - Observatorio de Feminicidios</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar glass">
+            <div class="logo">
+                <h2>Observatorio</h2>
+                <p>Feminicidios Colombia</p>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Total Nacional (2025)</h3>
+                    <h1 id="total-nacional">...</h1>
+                    <span class="trend">+50 vs 2019</span>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header glass">
+                <h1>Tablero Espacial de Siniestralidad y Violencia de Género</h1>
+                <p>Análisis geográfico y estadístico de feminicidios por departamento.</p>
+            </header>
+            
+            <div class="map-wrapper glass">
+                <div id="map"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
