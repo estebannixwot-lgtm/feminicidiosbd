@@ -21,22 +21,33 @@
             
             <div class="stats-container">
                 <div class="stat-card">
-                    <h3>Total Nacional (2025)</h3>
+                    <h3>Total (Seleccionado)</h3>
                     <h1 id="total-nacional">...</h1>
-                    <span class="trend">+50 vs 2019</span>
+                    <span class="trend">Datos Oficiales</span>
                 </div>
             </div>
 
-            <div class="filter-container" style="padding: 0 20px;">
-                <label for="dept-select" style="font-size: 0.9rem; color: #94a3b8;">Seleccionar Departamento:</label>
-                <select id="dept-select" style="width: 100%; padding: 10px; margin-top: 5px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
-                    <option value="">-- Vista Nacional --</option>
-                    <option value="05">Antioquia</option>
-                    <option value="11">Bogotá D.C.</option>
-                    <option value="08">Atlántico</option>
-                    <option value="76">Valle del Cauca</option>
-                    <option value="47">Magdalena</option>
-                </select>
+            <div class="filter-container" style="padding: 0 20px; display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label for="year-select" style="font-size: 0.9rem; color: #94a3b8;">Año:</label>
+                    <select id="year-select" style="width: 100%; padding: 10px; margin-top: 5px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                        <option value="2025" selected>2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="2020">2020</option>
+                        <option value="2019">2019</option>
+                        <option value="2018">2018</option>
+                        <option value="2017">2017</option>
+                    </select>
+                </div>
+                <div style="flex: 2;">
+                    <label for="dept-select" style="font-size: 0.9rem; color: #94a3b8;">Departamento:</label>
+                    <select id="dept-select" style="width: 100%; padding: 10px; margin-top: 5px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                        <option value="">-- Vista Nacional --</option>
+                    </select>
+                </div>
             </div>
 
             <div class="chart-container">

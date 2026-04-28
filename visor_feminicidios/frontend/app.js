@@ -44,43 +44,62 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadNationalData();
 
-    document.getElementById('dept-select').addEventListener('change', async (e) => {
-        const deCodigo = e.target.value;
-        const deName = e.target.options[e.target.selectedIndex].text;
-        if (deCodigo) {
-            await loadDepartmentData(deCodigo, deName);
-        } else {
-            await loadNationalData();
-        }
-    });
+    document.getElementById('dept-select').addEventListener('change', handleFilterChange);
+    document.getElementById('year-select').addEventListener('change', handleFilterChange);
 });
 
-async function loadNationalData() {
+async function handleFilterChange() {
+    const deptSelect = document.getElementById('dept-select');
+    const deCodigo = deptSelect.value;
+    const deName = deptSelect.options[deptSelect.selectedIndex].text;
+    const year = document.getElementById('year-select').value;
+
+    if (deCodigo) {
+        await loadDepartmentData(deCodigo, deName, year);
+    } else {
+        await loadNationalData(year);
+    }
+}
+
+async function loadNationalData(year = 2025) {
     markerGroup.clearLayers();
     map.setView([4.5709, -74.2973], 6);
 
     try {
-        const response = await fetch('http://localhost:3000/api/statistics');
+        const response = await fetch(`http://localhost:3000/api/statistics?year=${year}`);
         const data = await response.json();
 
-        const total2025 = data.nacionales.find(n => n.anio === 2025)?.total_feminicidios || 621;
-        document.getElementById('total-nacional').textContent = total2025;
+        // Populate departments select if it's empty
+        const deptSelect = document.getElementById('dept-select');
+        if (deptSelect.options.length <= 1) {
+            data.departamentos.forEach(dep => {
+                const opt = document.createElement('option');
+                opt.value = dep.codigo;
+                opt.textContent = dep.nombre;
+                deptSelect.appendChild(opt);
+            });
+        }
+
+        let currentTotal = 0;
+        data.departamentos.forEach(d => currentTotal += parseInt(d.total));
+        document.getElementById('total-nacional').textContent = currentTotal;
 
         const top5 = data.departamentos.slice(0, 5);
         updateChart('Departamentos con más Casos', top5.map(d => d.nombre), top5.map(d => parseInt(d.total)));
 
         data.departamentos.forEach(dep => {
-            if (coords[dep.nombre]) {
-                const radius = Math.sqrt(dep.total) * 3;
+            const total = parseInt(dep.total);
+            if (total > 0 && coords[dep.nombre]) {
+                const radius = Math.sqrt(total) * 3;
                 L.circleMarker(coords[dep.nombre], {
-                    radius: radius,
+                    radius: radius > 5 ? radius : 5,
                     fillColor: "#e11d48",
                     color: "#fff",
                     weight: 1,
                     opacity: 1,
                     fillOpacity: 0.6
                 }).addTo(markerGroup)
-                .bindPopup(`<b>${dep.nombre}</b><br>Feminicidios: ${dep.total}`);
+                .bindPopup(`<b>${dep.nombre}</b><br>Feminicidios: ${total}`);
             }
         });
     } catch (error) {
@@ -88,14 +107,14 @@ async function loadNationalData() {
     }
 }
 
-async function loadDepartmentData(deCodigo, deName) {
+async function loadDepartmentData(deCodigo, deName, year = 2025) {
     markerGroup.clearLayers();
     if (coords[deName]) {
         map.setView(coords[deName], 9);
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/api/municipios/${deCodigo}`);
+        const response = await fetch(`http://localhost:3000/api/municipios/${deCodigo}?year=${year}`);
         const cities = await response.json();
 
         let deptTotal = 0;
@@ -105,17 +124,18 @@ async function loadDepartmentData(deCodigo, deName) {
         updateChart(`Municipios en ${deName}`, cities.map(c => c.nombre), cities.map(c => parseInt(c.total_casos)));
 
         cities.forEach(city => {
-            if (cityCoords[city.nombre]) {
-                const radius = Math.sqrt(city.total_casos) * 5; // Un poco más grande para ciudades
+            const total = parseInt(city.total_casos);
+            if (total > 0 && cityCoords[city.nombre]) {
+                const radius = Math.sqrt(total) * 5; 
                 L.circleMarker(cityCoords[city.nombre], {
                     radius: radius > 5 ? radius : 5,
-                    fillColor: "#9333ea", // Diferente color para ciudades
+                    fillColor: "#9333ea", 
                     color: "#fff",
                     weight: 1,
                     opacity: 1,
                     fillOpacity: 0.6
                 }).addTo(markerGroup)
-                .bindPopup(`<b>${city.nombre}</b><br>Casos registrados: ${city.total_casos}`);
+                .bindPopup(`<b>${city.nombre}</b><br>Casos registrados: ${total}`);
             }
         });
     } catch (error) {

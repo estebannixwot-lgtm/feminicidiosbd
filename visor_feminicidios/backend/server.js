@@ -16,15 +16,21 @@ const pool = new Pool({
 
 app.get('/api/statistics', async (req, res) => {
   try {
-    const depsQuery = `
-      SELECT d.deNombre as nombre, e.total_feminicidios as total
-      FROM DEPARTAMENTO d
-      JOIN ESTADISTICAS_FEMINICIDIOS_POR_DEPARTAMENTO e ON d.deCodigo = e.deCodigo
-      WHERE e.anio = 2025
-      ORDER BY e.total_feminicidios DESC
-    `;
-    const depsResult = await pool.query(depsQuery);
+    const year = req.query.year || 2025;
     
+    // Todos los departamentos, conteo de casos en el año especificado
+    const depsQuery = `
+      SELECT d.deCodigo as codigo, d.deNombre as nombre, 
+             COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM c.fecha) = $1 THEN 1 ELSE 0 END), 0) as total
+      FROM DEPARTAMENTO d
+      LEFT JOIN MUNICIPIO m ON d.deCodigo = m.dpto_ccdgo
+      LEFT JOIN CASO_FEMINICIDIO c ON m.mpio_ccdgo = c.mpio_ccdgo
+      GROUP BY d.deCodigo, d.deNombre
+      ORDER BY total DESC, d.deNombre ASC
+    `;
+    const depsResult = await pool.query(depsQuery, [year]);
+    
+    // Nacionales
     const natQuery = `
       SELECT anio, total_feminicidios
       FROM ESTADISTICAS_NACIONALES
@@ -45,15 +51,17 @@ app.get('/api/statistics', async (req, res) => {
 app.get('/api/municipios/:deCodigo', async (req, res) => {
   try {
     const { deCodigo } = req.params;
+    const year = req.query.year || 2025;
     const query = `
-      SELECT m.mpio_cnmbr as nombre, COUNT(c.id_caso) as total_casos
+      SELECT m.mpio_cnmbr as nombre, 
+             COALESCE(SUM(CASE WHEN EXTRACT(YEAR FROM c.fecha) = $2 THEN 1 ELSE 0 END), 0) as total_casos
       FROM MUNICIPIO m
       LEFT JOIN CASO_FEMINICIDIO c ON m.mpio_ccdgo = c.mpio_ccdgo
       WHERE m.dpto_ccdgo = $1
       GROUP BY m.mpio_cnmbr
-      ORDER BY total_casos DESC
+      ORDER BY total_casos DESC, m.mpio_cnmbr ASC
     `;
-    const result = await pool.query(query, [deCodigo]);
+    const result = await pool.query(query, [deCodigo, year]);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
